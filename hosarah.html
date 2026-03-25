@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MH Picture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Jost:wght@200;300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Jost',sans-serif;background:#F7F4EE;color:#2A2A28;overflow-x:hidden;line-height:1.7}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;border:none;background:none;font-family:'Jost',sans-serif}
+:root{
+  --beige:#D4C9A8;--beige-lt:#EDE8DA;--beige-dk:#BDB096;
+  --sage:#A6A986;--sage-dk:#878A68;
+  --cream:#F7F4EE;--ink:#2A2A28;--ink-lt:#5C5C58;--muted:#8A8A84;--border:#DDD8CC;
+  --serif:'Cormorant Garamond',Georgia,serif;--sans:'Jost',sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1);--dur:.35s;
+}
+/* OVERLAY */
+#overlay{position:fixed;inset:0;background:rgba(42,42,40,.45);z-index:200;opacity:0;visibility:hidden;transition:opacity var(--dur),visibility var(--dur);backdrop-filter:blur(3px)}
+#overlay.on{opacity:1;visibility:visible}
+/* SIDE NAV */
+.side-nav{position:fixed;top:0;left:0;width:300px;height:100vh;background:var(--cream);z-index:300;transform:translateX(-100%);transition:transform var(--dur) var(--ease);display:flex;flex-direction:column;padding:2rem 2.5rem;border-right:1px solid var(--border)}
+.side-nav.on{transform:translateX(0)}
+.side-nav-top{display:flex;justify-content:flex-end;margin-bottom:2.5rem}
+.x-btn{font-size:.85rem;color:var(--muted);padding:.3rem;letter-spacing:.05em;transition:color var(--dur)}
+.x-btn:hover{color:var(--ink)}
+.side-nav ul{list-style:none;flex:1}
+.side-nav ul li{border-bottom:1px solid var(--border)}
+.side-nav ul li a{display:block;padding:1.1rem 0;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-lt);transition:color var(--dur),padding-left var(--dur)}
+.side-nav ul li a:hover{color:var(--ink);padding-left:.6rem}
+.side-nav-foot{margin-top:2rem;font-family:var(--serif);font-style:italic;color:var(--muted);font-size:1rem;line-height:1.5}
+/* CART PANEL */
+.cart-panel{position:fixed;top:0;right:0;width:420px;max-width:100vw;height:100vh;background:var(--cream);z-index:300;transform:translateX(110%);transition:transform var(--dur) var(--ease);display:flex;flex-direction:column;border-left:1px solid var(--border);box-shadow:-8px 0 48px rgba(42,42,40,.1)}
+.cart-panel.on{transform:translateX(0)}
+.cart-head{display:flex;justify-content:space-between;align-items:center;padding:1.5rem 2rem;border-bottom:1px solid var(--border)}
+.cart-head h3{font-family:var(--serif);font-size:1.5rem;font-weight:400;letter-spacing:.04em}
+.cart-body{flex:1;overflow-y:auto;padding:1.5rem 2rem}
+.cart-empty-state{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;color:var(--muted);text-align:center}
+.cart-empty-state .emo{font-size:2.5rem;opacity:.35}
+.cart-empty-state p{font-family:var(--serif);font-style:italic;font-size:1.1rem}
+.cart-item{display:grid;grid-template-columns:72px 1fr auto;gap:1rem;align-items:start;padding:1.1rem 0;border-bottom:1px solid var(--border)}
+.cart-thumb{width:72px;height:88px;background:var(--beige-lt);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:2rem}
+.cart-item h4{font-family:var(--serif);font-size:1rem;font-weight:400;margin-bottom:.25rem}
+.cart-variant{font-size:.72rem;color:var(--muted);letter-spacing:.06em;margin-bottom:.6rem}
+.qty-row{display:flex;align-items:center;gap:.6rem;font-size:.85rem}
+.qty-btn{width:24px;height:24px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:background var(--dur)}
+.qty-btn:hover{background:var(--beige-lt)}
+.rm-btn{font-size:.72rem;color:var(--muted);cursor:pointer;display:block;margin-top:.4rem;transition:color var(--dur)}
+.rm-btn:hover{color:#c0392b}
+.cart-price{font-size:.92rem;font-weight:500;white-space:nowrap}
+.cart-foot{padding:1.5rem 2rem;border-top:1px solid var(--border);background:var(--beige-lt)}
+.cart-total-row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:1.25rem}
+.cart-total-row span:first-child{font-family:var(--serif);font-size:1.1rem}
+.cart-total-row span:last-child{font-family:var(--serif);font-size:1.3rem;font-weight:500}
+/* ACCOUNT MODAL */
+.modal-wrap{position:fixed;inset:0;background:rgba(42,42,40,.6);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity var(--dur),visibility var(--dur);backdrop-filter:blur(5px)}
+.modal-wrap.on{opacity:1;visibility:visible}
+.modal-box{background:var(--cream);width:100%;max-width:420px;padding:3rem;position:relative;border:1px solid var(--border);transform:translateY(16px);transition:transform var(--dur) var(--ease)}
+.modal-wrap.on .modal-box{transform:translateY(0)}
+.modal-close{position:absolute;top:1.25rem;right:1.25rem;font-size:.95rem;color:var(--muted);transition:color var(--dur)}
+.modal-close:hover{color:var(--ink)}
+.modal-box h2{font-family:var(--serif);font-size:2rem;font-weight:300;margin-bottom:1.5rem}
+.tab-row{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.tab{flex:1;padding:.75rem;text-align:center;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all var(--dur)}
+.tab.active{color:var(--ink);border-bottom-color:var(--ink)}
+.m-input{display:block;width:100%;padding:.9rem 1rem;margin-bottom:1rem;border:1px solid var(--border);background:#fff;color:var(--ink);font-size:.9rem;outline:none;font-family:var(--sans);transition:border-color var(--dur)}
+.m-input:focus{border-color:var(--sage)}
+.m-btn{display:block;width:100%;padding:1rem;background:var(--ink);color:#fff;font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;font-family:var(--sans);font-weight:500;transition:background var(--dur)}
+.m-btn:hover{background:var(--sage-dk)}
+.m-link{display:block;text-align:center;margin-top:1rem;font-size:.78rem;color:var(--muted);transition:color var(--dur)}
+.m-link:hover{color:var(--ink)}
+/* HEADER */
+.hdr{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(247,244,238,.92);backdrop-filter:blur(14px);border-bottom:1px solid transparent;transition:border-color var(--dur)}
+.hdr.scrolled{border-bottom-color:var(--border)}
+.hdr-inner{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:1.3rem 2.5rem;max-width:1500px;margin:0 auto}
+.burger{display:flex;flex-direction:column;gap:5px;padding:4px;width:34px}
+.burger span{display:block;height:1px;background:var(--ink);transition:background var(--dur)}
+.burger:hover span{background:var(--sage-dk)}
+.logo{font-family:var(--serif);font-size:1.6rem;font-weight:400;letter-spacing:.3em;text-transform:uppercase;color:var(--ink);text-align:center;transition:color var(--dur);white-space:nowrap}
+.logo:hover{color:var(--sage-dk)}
+.hdr-icons{display:flex;align-items:center;justify-content:flex-end;gap:1.25rem}
+.ico-btn{display:flex;align-items:center;color:var(--ink);transition:color var(--dur);padding:4px;position:relative}
+.ico-btn:hover{color:var(--sage-dk)}
+.badge{position:absolute;top:-5px;right:-7px;width:17px;height:17px;background:var(--sage);color:#fff;font-size:.58rem;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;transition:all var(--dur)}
+.badge.hide{opacity:0;transform:scale(0)}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:.5rem;padding:1rem 2.6rem;font-size:.74rem;font-family:var(--sans);font-weight:500;letter-spacing:.2em;text-transform:uppercase;transition:all var(--dur);border:1px solid transparent;cursor:pointer}
+.btn-dark{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn-dark:hover{background:var(--sage-dk);border-color:var(--sage-dk)}
+.btn-line{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn-line:hover{background:var(--ink);color:#fff}
+.btn-w{width:100%;justify-content:center}
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 75% 35%,rgba(166,169,134,.18) 0%,transparent 55%),radial-gradient(ellipse 65% 85% at 18% 75%,rgba(212,201,168,.3) 0%,transparent 50%),linear-gradient(155deg,#EDE8DA 0%,#F7F4EE 50%,#EAE5D8 100%)}
+.hero-bg::after{content:'';position:absolute;inset:0;background-image:radial-gradient(circle at 1px 1px,rgba(42,42,40,.035) 1px,transparent 0);background-size:30px 30px}
+.hero-circle{position:absolute;border:1px solid rgba(42,42,40,.07);border-radius:50%}
+.hc1{width:520px;height:520px;top:50%;left:72%;transform:translate(-50%,-50%);animation:rotSlow 45s linear infinite}
+.hc2{width:350px;height:350px;top:50%;left:72%;transform:translate(-50%,-50%);animation:rotSlow 30s linear infinite reverse}
+@keyframes rotSlow{from{transform:translate(-50%,-50%) rotate(0)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+.hero-content{position:relative;z-index:2;max-width:680px;padding:2rem;text-align:center;animation:fadeUp .9s .1s both}
+.hero-eyebrow{font-size:.68rem;letter-spacing:.35em;text-transform:uppercase;color:var(--sage-dk);margin-bottom:1.75rem}
+.hero-title{font-family:var(--serif);font-size:clamp(3.6rem,8vw,6.5rem);font-weight:300;line-height:1.05;color:var(--ink);margin-bottom:1.75rem}
+.hero-title em{font-style:italic;color:var(--sage-dk)}
+.hero-desc{font-size:.98rem;color:var(--ink-lt);max-width:400px;margin:0 auto 3rem;line-height:1.9;font-weight:300}
+.hero-scroll{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.75rem;font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);z-index:2;animation:fadeUp .9s .6s both}
+.scroll-bar{width:1px;height:44px;background:linear-gradient(to bottom,var(--muted),transparent);animation:drip 2s infinite}
+@keyframes drip{0%{transform:scaleY(0);transform-origin:top;opacity:0}45%{transform:scaleY(1);transform-origin:top;opacity:1}55%{transform:scaleY(1);transform-origin:bottom;opacity:1}100%{transform:scaleY(0);transform-origin:bottom;opacity:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+/* SECTION */
+.s-label{font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;color:var(--sage-dk);margin-bottom:.75rem}
+.s-title{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:300;line-height:1.2;margin-bottom:2.5rem}
+.s-head{text-align:center}
+/* CATEGORIES */
+.cats-section{max-width:1400px;margin:0 auto;padding:6rem 2.5rem}
+.cats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-top:3.5rem}
+.cat-card{display:block;text-align:center;cursor:pointer;transition:transform .4s var(--ease)}
+.cat-card:hover{transform:translateY(-6px)}
+.cat-vis{height:220px;border-radius:3px;display:flex;align-items:center;justify-content:center;margin-bottom:1.4rem;position:relative;overflow:hidden;transition:box-shadow .4s}
+.cat-card:hover .cat-vis{box-shadow:0 16px 48px rgba(42,42,40,.12)}
+.cat-emo{font-size:3rem}
+.cat-card h3{font-family:var(--serif);font-size:1.25rem;font-weight:400;margin-bottom:.3rem}
+.cat-card p{font-size:.76rem;color:var(--muted);letter-spacing:.06em}
+/* PRODUCTS */
+.products-section{max-width:1400px;margin:0 auto;padding:5rem 2.5rem}
+.prod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:2.5rem}
+.prod-card{cursor:pointer;transition:transform .4s var(--ease)}
+.prod-card:hover{transform:translateY(-4px)}
+.prod-img{position:relative;overflow:hidden;aspect-ratio:3/4;border-radius:3px;background:var(--beige-lt);margin-bottom:1.1rem}
+.prod-emo{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;transition:transform .5s var(--ease)}
+.prod-card:hover .prod-emo{transform:scale(1.06)}
+.prod-badge{position:absolute;top:1rem;left:1rem;background:var(--ink);color:#fff;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;padding:.3rem .8rem;z-index:1}
+.prod-badge.sale-badge{background:var(--sage-dk)}
+.prod-overlay{position:absolute;inset:0;background:rgba(42,42,40,.52);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .35s}
+.prod-card:hover .prod-overlay{opacity:1}
+.ov-btn{padding:.8rem 1.6rem;background:#fff;color:var(--ink);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;font-family:var(--sans);cursor:pointer;transition:background var(--dur)}
+.ov-btn:hover{background:var(--beige-lt)}
+.prod-cat{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--sage-dk);margin-bottom:.35rem}
+.prod-name{font-family:var(--serif);font-size:1.25rem;font-weight:400;margin-bottom:.5rem;color:var(--ink)}
+.prod-price{font-size:.95rem;color:var(--ink-lt)}
+.prod-price .was{text-decoration:line-through;color:var(--muted);margin-right:.5rem;font-size:.85rem}
+.prod-price .now{color:var(--sage-dk)}
+/* PHILOSOPHY */
+.philo-wrap{background:var(--beige-lt)}
+.philo-inner{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1.1fr 1fr;gap:5rem;align-items:center;padding:7rem 2.5rem}
+.philo-text .s-title{font-size:clamp(1.9rem,3vw,2.7rem);margin-bottom:1.5rem}
+.philo-text .s-title em{font-style:italic;color:var(--sage-dk)}
+.philo-text p{font-size:.94rem;color:var(--ink-lt);line-height:1.95;margin-bottom:2rem;font-weight:300}
+.philo-orb{display:flex;align-items:center;justify-content:center}
+.orb{width:300px;height:300px;border-radius:50%;border:1px solid var(--beige-dk);display:flex;align-items:center;justify-content:center;position:relative;animation:rotSlow 35s linear infinite}
+.orb::before{content:'';position:absolute;inset:22px;border-radius:50%;border:1px dashed var(--sage);animation:rotSlow 20s linear infinite reverse}
+.orb::after{content:'';position:absolute;inset:55px;border-radius:50%;border:1px solid rgba(166,169,134,.35)}
+.orb span{font-size:2.8rem;color:var(--beige-dk);position:relative;z-index:1}
+/* NEWSLETTER */
+.nl-wrap{background:var(--ink);color:#fff;text-align:center;padding:7rem 2.5rem}
+.nl-wrap h2{font-family:var(--serif);font-size:clamp(2rem,4vw,3rem);font-weight:300;margin-bottom:1rem}
+.nl-wrap>p{font-size:.9rem;opacity:.65;max-width:420px;margin:0 auto 2.75rem;font-weight:300}
+.nl-form{display:flex;max-width:500px;margin:0 auto}
+.nl-in{flex:1;padding:1rem 1.25rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;font-size:.9rem;outline:none;font-family:var(--sans);transition:border-color var(--dur)}
+.nl-in::placeholder{color:rgba(255,255,255,.38)}
+.nl-in:focus{border-color:var(--beige)}
+.nl-btn{padding:1rem 2rem;background:var(--beige);color:var(--ink);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-family:var(--sans);font-weight:500;transition:background var(--dur);cursor:pointer;border:none}
+.nl-btn:hover{background:var(--beige-dk)}
+.nl-note{font-size:.78rem;color:var(--sage);margin-top:.9rem;min-height:1.2em}
+/* SHOP PAGE */
+.shop-hero{min-height:38vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 4rem;background:linear-gradient(160deg,var(--beige-lt) 0%,var(--cream) 100%);border-bottom:1px solid var(--border)}
+.shop-hero h1{font-family:var(--serif);font-size:clamp(3rem,7vw,5.5rem);font-weight:300;margin:.5rem 0 1rem}
+.shop-hero p{font-size:.92rem;color:var(--ink-lt);max-width:420px;line-height:1.85;font-weight:300}
+.filter-bar{display:flex;flex-wrap:wrap;gap:.6rem;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border)}
+.f-btn{padding:.6rem 1.6rem;font-size:.7rem;font-family:var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-lt);border:1px solid var(--border);background:#fff;transition:all var(--dur);cursor:pointer}
+.f-btn:hover,.f-btn.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.prod-count{font-size:.8rem;color:var(--muted);letter-spacing:.06em;margin-bottom:2rem}
+/* PRODUCT DETAIL */
+.breadcrumb{max-width:1300px;margin:0 auto;padding:7rem 2.5rem 2rem;display:flex;gap:.75rem;font-size:.78rem;color:var(--muted);flex-wrap:wrap}
+.breadcrumb a:hover{color:var(--ink)}
+.breadcrumb .sep{color:var(--border)}
+.pd-grid{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;padding:1rem 2.5rem 6rem}
+.pd-main-img{aspect-ratio:3/4;background:var(--beige-lt);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8rem;margin-bottom:1rem;transition:all .3s}
+.pd-thumbs{display:flex;gap:.75rem}
+.pd-th{width:82px;height:100px;background:var(--beige-lt);border-radius:2px;border:2px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:2rem;transition:border-color var(--dur)}
+.pd-th.on,.pd-th:hover{border-color:var(--ink)}
+.pd-cat{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--sage-dk);margin-bottom:.75rem}
+.pd-name{font-family:var(--serif);font-size:clamp(2.2rem,4vw,3.2rem);font-weight:300;line-height:1.15;margin-bottom:.9rem}
+.pd-price{font-family:var(--serif);font-size:1.65rem;margin-bottom:.5rem}
+.pd-price .was{text-decoration:line-through;color:var(--muted);font-size:1.1rem;margin-right:.6rem}
+.pd-desc{font-size:.9rem;color:var(--ink-lt);line-height:1.95;margin-bottom:2rem;padding-bottom:2rem;border-bottom:1px solid var(--border);font-weight:300}
+.var-sec{margin-bottom:1.75rem}
+.var-label{font-size:.7rem;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.75rem}
+.var-opts{display:flex;flex-wrap:wrap;gap:.5rem}
+.var-opt{padding:.5rem 1.3rem;border:1px solid var(--border);font-size:.8rem;cursor:pointer;background:#fff;color:var(--ink);font-family:var(--sans);transition:all var(--dur)}
+.var-opt.on,.var-opt:hover{border-color:var(--ink);background:var(--ink);color:#fff}
+.feat-list{margin-bottom:2rem}
+.feat-item{display:flex;gap:.75rem;align-items:flex-start;margin-bottom:.75rem;font-size:.86rem;color:var(--ink-lt)}
+.feat-icon{color:var(--sage);font-size:.8rem;margin-top:3px}
+.atc-btn{width:100%;padding:1.15rem;background:var(--ink);color:#fff;font-size:.76rem;font-family:var(--sans);letter-spacing:.2em;text-transform:uppercase;font-weight:500;transition:background var(--dur);cursor:pointer;border:1px solid var(--ink);margin-bottom:.85rem}
+.atc-btn:hover{background:var(--sage-dk);border-color:var(--sage-dk)}
+/* CONTACT */
+.contact-wrap{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 1.6fr;gap:5rem;align-items:start;padding:5rem 2.5rem}
+.contact-info h2{font-family:var(--serif);font-size:2.3rem;font-weight:300;margin-bottom:1rem}
+.contact-info>p{font-size:.9rem;color:var(--ink-lt);line-height:1.9;margin-bottom:2.5rem;font-weight:300}
+.c-det{display:flex;gap:1rem;margin-bottom:1.75rem;align-items:flex-start}
+.c-icon{width:38px;height:38px;background:var(--beige-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
+.c-det h4{font-size:.68rem;letter-spacing:.17em;text-transform:uppercase;color:var(--muted);margin-bottom:.2rem}
+.c-det p{font-size:.9rem}
+.c-orb{font-size:3.5rem;color:var(--beige-dk);margin-top:3rem;opacity:.35}
+.c-form .f-grp{margin-bottom:1.4rem}
+.c-form label{display:block;font-size:.7rem;letter-spacing:.17em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.5rem}
+.c-form input,.c-form textarea,.c-form select{width:100%;padding:.9rem 1rem;border:1px solid var(--border);background:#fff;color:var(--ink);font-size:.9rem;outline:none;resize:none;font-family:var(--sans);transition:border-color var(--dur);appearance:none}
+.c-form input:focus,.c-form textarea:focus,.c-form select:focus{border-color:var(--sage)}
+.f-note{text-align:center;font-size:.8rem;color:var(--sage-dk);margin-top:.85rem;min-height:1.2em}
+/* FAQ */
+.faq-wrap{background:var(--beige-lt);padding:6rem 2.5rem}
+.faq-list{max-width:820px;margin:0 auto}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{display:flex;justify-content:space-between;align-items:center;width:100%;padding:1.4rem 0;font-family:var(--serif);font-size:1.15rem;font-weight:400;text-align:left;color:var(--ink);transition:color var(--dur);gap:1rem;cursor:pointer}
+.faq-q:hover{color:var(--sage-dk)}
+.faq-arr{font-size:1rem;flex-shrink:0;transition:transform var(--dur)}
+.faq-q.open .faq-arr{transform:rotate(180deg);color:var(--sage-dk)}
+.faq-a{display:none;padding-bottom:1.5rem}
+.faq-a.open{display:block}
+.faq-a p{font-size:.9rem;color:var(--ink-lt);line-height:1.95;font-weight:300}
+/* CHECKOUT MODAL */
+.ck-modal{position:fixed;inset:0;background:rgba(42,42,40,.75);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity var(--dur),visibility var(--dur);backdrop-filter:blur(6px)}
+.ck-modal.on{opacity:1;visibility:visible}
+.ck-box{background:var(--cream);max-width:580px;width:92%;padding:3rem;position:relative;max-height:90vh;overflow-y:auto}
+.ck-step{display:none}
+.ck-step.on{display:block}
+.ck-box h2{font-family:var(--serif);font-size:2rem;font-weight:300;margin-bottom:1.5rem}
+.ck-summary{background:var(--beige-lt);padding:1.25rem;margin-bottom:1.5rem;font-size:.86rem}
+.ck-row{display:flex;justify-content:space-between;margin-bottom:.45rem}
+.ck-total{display:flex;justify-content:space-between;padding-top:.75rem;border-top:1px solid var(--border);font-family:var(--serif);font-size:1.1rem;font-weight:500}
+.ck-form .f-grp{margin-bottom:1rem}
+.ck-form .f-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.ck-form label{display:block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-lt);margin-bottom:.45rem}
+.ck-form input{width:100%;padding:.8rem 1rem;border:1px solid var(--border);background:#fff;font-size:.87rem;outline:none;font-family:var(--sans);transition:border-color var(--dur)}
+.ck-form input:focus{border-color:var(--sage)}
+.success-ico{width:80px;height:80px;background:var(--beige-lt);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 2rem}
+.success-body{text-align:center}
+.success-body h2{margin-bottom:1rem}
+.success-body p{font-size:.9rem;color:var(--ink-lt);line-height:1.85;margin-bottom:.4rem;font-weight:300}
+.order-num{font-family:var(--serif);font-size:1.2rem;color:var(--sage-dk);margin:1.5rem 0}
+.hr-div{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+/* TOAST */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:.9rem 2rem;font-size:.82rem;letter-spacing:.06em;z-index:600;transition:transform .4s var(--ease);white-space:nowrap;box-shadow:0 8px 32px rgba(42,42,40,.25)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+/* FOOTER */
+footer{background:#1C1C1A;color:rgba(255,255,255,.6);padding:5rem 2.5rem 2rem}
+.foot-grid{max-width:1400px;margin:0 auto;display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:4rem}
+.foot-brand .logo-f{font-family:var(--serif);font-size:1.4rem;font-weight:400;letter-spacing:.28em;text-transform:uppercase;color:#fff;display:block;margin-bottom:1rem}
+.foot-brand p{font-size:.82rem;line-height:1.9;color:rgba(255,255,255,.42)}
+.foot-col h4{font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:#fff;margin-bottom:1.25rem}
+.foot-col ul{list-style:none}
+.foot-col ul li{margin-bottom:.6rem}
+.foot-col ul li a{font-size:.83rem;color:rgba(255,255,255,.45);transition:color var(--dur)}
+.foot-col ul li a:hover{color:var(--beige)}
+.foot-bottom{max-width:1400px;margin:0 auto;padding-top:2rem;border-top:1px solid rgba(255,255,255,.08);text-align:center;font-size:.75rem;color:rgba(255,255,255,.25)}
+.s-cta{text-align:center;margin-top:3.5rem}
+.related-section{max-width:1400px;margin:0 auto;padding:4rem 2.5rem 6rem;border-top:1px solid var(--border)}
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+/* RESPONSIVE */
+@media(max-width:1100px){.cats-grid{grid-template-columns:repeat(2,1fr)}.philo-orb{display:none}.philo-inner{grid-template-columns:1fr;padding:5rem 2.5rem}.foot-grid{grid-template-columns:1fr 1fr}.pd-grid{grid-template-columns:1fr;gap:3rem;padding:1rem 2rem 5rem}.contact-wrap{grid-template-columns:1fr;gap:3rem}}
+@media(max-width:768px){.hdr-inner{padding:1.1rem 1.5rem}.hero-title{font-size:3.2rem}.cats-grid{grid-template-columns:1fr 1fr}.foot-grid{grid-template-columns:1fr}.nl-form{flex-direction:column}.side-nav{width:88vw}.cart-panel{width:100vw}.ck-form .f-row{grid-template-columns:1fr}}
+@media(max-width:480px){.cats-grid{grid-template-columns:1fr}.hero-title{font-size:2.6rem}}
+</style>
+</head>
+<body>
+
+<div id="overlay" onclick="closeSideNav()"></div>
+
+<!-- SIDE NAV -->
+<nav class="side-nav" id="sideNav">
+  <div class="side-nav-top"><button class="x-btn" onclick="closeSideNav()">✕ FERMER</button></div>
+  <ul>
+    <li><a href="#" onclick="showPage('home');closeSideNav()">Accueil</a></li>
+    <li><a href="#" onclick="showPage('shop');closeSideNav()">Boutique</a></li>
+    <li><a href="#" onclick="showPage('shop');filterProd('posters',null);closeSideNav()">Posters Imprimés</a></li>
+    <li><a href="#" onclick="showPage('shop');filterProd('digital',null);closeSideNav()">Version Digitale</a></li>
+    <li><a href="#" onclick="showPage('shop');filterProd('wallpapers',null);closeSideNav()">Fonds d'écran</a></li>
+    <li><a href="#" onclick="showPage('shop');filterProd('packs',null);closeSideNav()">Packs Trio</a></li>
+    <li><a href="#" onclick="showPage('contact');closeSideNav()">Contact</a></li>
+  </ul>
+  <div class="side-nav-foot">"L'art qui apaise, l'âme qui s'éveille."</div>
+</nav>
+
+<!-- CART PANEL -->
+<div class="cart-panel" id="cartPanel">
+  <div class="cart-head">
+    <h3>Votre Panier</h3>
+    <button class="x-btn" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-body" id="cartBody"></div>
+  <div id="cartFoot"></div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-wrap" id="accountModal" onclick="if(event.target===this)closeAccount()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAccount()">✕</button>
+    <h2>Mon Compte</h2>
+    <div class="tab-row">
+      <button class="tab active" id="tabLogin" onclick="switchTab('login')">Connexion</button>
+      <button class="tab" id="tabReg" onclick="switchTab('reg')">Inscription</button>
+    </div>
+    <div id="formLogin">
+      <input class="m-input" type="email" placeholder="Email"/>
+      <input class="m-input" type="password" placeholder="Mot de passe"/>
+      <button class="m-btn">Se connecter</button>
+      <a href="#" class="m-link">Mot de passe oublié ?</a>
+    </div>
+    <div id="formReg" style="display:none">
+      <input class="m-input" type="text" placeholder="Prénom"/>
+      <input class="m-input" type="email" placeholder="Email"/>
+      <input class="m-input" type="password" placeholder="Mot de passe"/>
+      <button class="m-btn">Créer mon compte</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="ck-modal" id="ckModal">
+  <div class="ck-box">
+    <button class="modal-close" onclick="closeCk()">✕</button>
+    <div class="ck-step on" id="ck1">
+      <h2>Commander</h2>
+      <div class="ck-summary" id="ckSummary"></div>
+      <form class="ck-form" onsubmit="processCk(event)">
+        <div class="f-row"><div class="f-grp"><label>Prénom</label><input id="ck-fn" required placeholder="Amira"/></div><div class="f-grp"><label>Nom</label><input id="ck-ln" required placeholder="Martin"/></div></div>
+        <div class="f-grp"><label>Email</label><input id="ck-em" type="email" required placeholder="amira@email.com"/></div>
+        <div class="f-grp"><label>Adresse</label><input required placeholder="12 rue des Oliviers"/></div>
+        <div class="f-row"><div class="f-grp"><label>Code postal</label><input required placeholder="75001"/></div><div class="f-grp"><label>Ville</label><input required placeholder="Paris"/></div></div>
+        <hr class="hr-div"/>
+        <div class="f-grp"><label>Numéro de carte</label><input placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)"/></div>
+        <div class="f-row"><div class="f-grp"><label>Expiration</label><input placeholder="MM/AA" maxlength="5"/></div><div class="f-grp"><label>CVV</label><input placeholder="123" maxlength="3"/></div></div>
+        <button type="submit" class="btn btn-dark btn-w" style="margin-top:1.5rem" id="ckPayBtn">Payer</button>
+        <p style="text-align:center;font-size:.7rem;color:var(--muted);margin-top:.75rem">🔒 Paiement simulé — aucune donnée transmise</p>
+      </form>
+    </div>
+    <div class="ck-step" id="ck2">
+      <div class="success-ico">✦</div>
+      <div class="success-body">
+        <h2>Merci pour votre commande !</h2>
+        <p>Votre commande a bien été confirmée.</p>
+        <p>Un email de confirmation vous a été envoyé.</p>
+        <div class="order-num" id="orderNum"></div>
+        <button onclick="closeCk();showPage('shop')" class="btn btn-dark" style="margin-top:1.5rem">Continuer mes achats</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- HEADER -->
+<header class="hdr" id="hdr">
+  <div class="hdr-inner">
+    <button class="burger" onclick="openSideNav()"><span></span><span></span><span></span></button>
+    <a href="#" class="logo" onclick="showPage('home')">MH Picture</a>
+    <div class="hdr-icons">
+      <button class="ico-btn" onclick="openAccount()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </button>
+      <button class="ico-btn" onclick="openCart()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        <span class="badge hide" id="badge">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ PAGE HOME ═══ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-circle hc1"></div>
+    <div class="hero-circle hc2"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Collection Printemps 2025</p>
+      <h1 class="hero-title">L'Art au<br/><em>service de l'âme</em></h1>
+      <p class="hero-desc">Des affiches spirituelles et minimalistes pour illuminer vos espaces intérieurs avec grâce et intention.</p>
+      <button class="btn btn-dark" onclick="showPage('shop')">Voir la Collection</button>
+    </div>
+    <div class="hero-scroll"><span>Défiler</span><div class="scroll-bar"></div></div>
+  </section>
+
+  <div class="cats-section">
+    <div class="s-head reveal"><p class="s-label">Explorer par thème</p><h2 class="s-title">Nos Catégories</h2></div>
+    <div class="cats-grid">
+      <a href="#" class="cat-card reveal" onclick="showPage('shop');filterProd('posters',null)">
+        <div class="cat-vis" style="background:linear-gradient(135deg,#D4C9A8,#c0b48e)"><img src="image01.jpg" alt="Posters" class="cat-img"></div>
+        <h3>Posters Imprimés</h3><p>Papier premium, livraison soignée</p>
+      </a>
+      <a href="#" class="cat-card reveal" onclick="showPage('shop');filterProd('digital',null)">
+        <div class="cat-vis" style="background:linear-gradient(135deg,#A6A986,#8c8f6e)"><span class="cat-emo">📲</span></div>
+        <h3>Version Digitale</h3><p>Téléchargement instantané HD</p>
+      </a>
+      <a href="#" class="cat-card reveal" onclick="showPage('shop');filterProd('wallpapers',null)">
+        <div class="cat-vis" style="background:linear-gradient(135deg,#cac4b0,#b3ac96)"><span class="cat-emo">🌿</span></div>
+        <h3>Fonds d'écran</h3><p>Mobile & Desktop harmonieux</p>
+      </a>
+      <a href="#" class="cat-card reveal" onclick="showPage('shop');filterProd('packs',null)">
+        <div class="cat-vis" style="background:linear-gradient(135deg,#a8a89a,#8d8d80)"><span class="cat-emo">✦</span></div>
+        <h3>Packs Trio</h3><p>3 œuvres, prix réduit</p>
+      </a>
+    </div>
+  </div>
+
+  <div class="products-section">
+    <div class="s-head reveal"><p class="s-label">Sélection du moment</p><h2 class="s-title">Produits en Vedette</h2></div>
+    <div class="prod-grid" id="featGrid"></div>
+    <div class="s-cta reveal"><button class="btn btn-line" onclick="showPage('shop')">Voir toute la boutique →</button></div>
+  </div>
+
+  <div class="philo-wrap">
+    <div class="philo-inner">
+      <div class="philo-text reveal">
+        <p class="s-label">Notre Vision</p>
+        <h2 class="s-title">"L'art spirituel n'est pas une décoration,<br/><em>c'est une présence."</em></h2>
+        <p>Chaque affiche HOSARAH est conçue pour éveiller quelque chose en vous. Une esthétique épurée au service de l'intention. Nous croyons que les espaces que nous habitons façonnent qui nous sommes.</p>
+        <button class="btn btn-line" onclick="showPage('contact')">Nous écrire</button>
+      </div>
+      <div class="philo-orb"><div class="orb"><span>✦</span></div></div>
+    </div>
+  </div>
+
+  <div class="nl-wrap">
+    <h2>Rejoignez la communauté</h2>
+    <p>Recevez nos nouvelles créations, offres exclusives et inspirations spirituelles.</p>
+    <form class="nl-form" onsubmit="handleNL(event)">
+      <input class="nl-in" type="email" placeholder="Votre adresse email" required/>
+      <button type="submit" class="nl-btn">S'inscrire</button>
+    </form>
+    <p class="nl-note" id="nlNote"></p>
+  </div>
+
+  <footer>
+    <div class="foot-grid">
+      <div class="foot-brand"><a href="#" class="logo-f" onclick="showPage('home')">HOSARAH</a><p>Art spirituel & minimaliste pour des espaces qui respirent et des âmes qui s'éveillent.</p></div>
+      <div class="foot-col"><h4>Navigation</h4><ul><li><a href="#" onclick="showPage('home')">Accueil</a></li><li><a href="#" onclick="showPage('shop')">Boutique</a></li><li><a href="#" onclick="showPage('contact')">Contact</a></li></ul></div>
+      <div class="foot-col"><h4>Collections</h4><ul><li><a href="#" onclick="showPage('shop');filterProd('posters',null)">Posters Imprimés</a></li><li><a href="#" onclick="showPage('shop');filterProd('digital',null)">Version Digitale</a></li><li><a href="#" onclick="showPage('shop');filterProd('wallpapers',null)">Fonds d'écran</a></li><li><a href="#" onclick="showPage('shop');filterProd('packs',null)">Packs Trio</a></li></ul></div>
+      <div class="foot-col"><h4>Infos</h4><ul><li><a href="#">Confidentialité</a></li><li><a href="#">CGV</a></li><li><a href="#">Livraison & Retours</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">© 2025 HOSARAH — Tous droits réservés.</div>
+  </footer>
+</div>
+
+<!-- ═══ PAGE SHOP ═══ -->
+<div class="page" id="page-shop">
+  <div class="shop-hero">
+    <p class="s-label">Explorez notre univers</p>
+    <h1>La Boutique</h1>
+    <p>Chaque œuvre, une intention. Chaque espace, une transformation.</p>
+  </div>
+  <div style="max-width:1400px;margin:0 auto;padding:3.5rem 2.5rem">
+    <div class="filter-bar" id="filterBar">
+      <button class="f-btn on" data-cat="all" onclick="filterProd('all',this)">Tout voir</button>
+      <button class="f-btn" data-cat="posters" onclick="filterProd('posters',this)">Posters Imprimés</button>
+      <button class="f-btn" data-cat="digital" onclick="filterProd('digital',this)">Version Digitale</button>
+      <button class="f-btn" data-cat="wallpapers" onclick="filterProd('wallpapers',this)">Fonds d'écran</button>
+      <button class="f-btn" data-cat="packs" onclick="filterProd('packs',this)">Packs Trio</button>
+    </div>
+    <p class="prod-count" id="prodCount">12 produits</p>
+    <div class="prod-grid" id="shopGrid"></div>
+  </div>
+  <footer>
+    <div class="foot-grid">
+      <div class="foot-brand"><a href="#" class="logo-f" onclick="showPage('home')">HOSARAH</a><p>Art spirituel & minimaliste pour des espaces qui respirent.</p></div>
+      <div class="foot-col"><h4>Navigation</h4><ul><li><a href="#" onclick="showPage('home')">Accueil</a></li><li><a href="#" onclick="showPage('shop')">Boutique</a></li><li><a href="#" onclick="showPage('contact')">Contact</a></li></ul></div>
+      <div class="foot-col"><h4>Collections</h4><ul><li><a href="#" onclick="filterProd('posters',null)">Posters</a></li><li><a href="#" onclick="filterProd('digital',null)">Digital</a></li><li><a href="#" onclick="filterProd('wallpapers',null)">Wallpapers</a></li><li><a href="#" onclick="filterProd('packs',null)">Packs</a></li></ul></div>
+      <div class="foot-col"><h4>Infos</h4><ul><li><a href="#">CGV</a></li><li><a href="#">Livraison</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">© 2025 HOSARAH — Tous droits réservés.</div>
+  </footer>
+</div>
+
+<!-- ═══ PAGE PRODUCT ═══ -->
+<div class="page" id="page-product">
+  <div class="breadcrumb">
+    <a href="#" onclick="showPage('home')">Accueil</a>
+    <span class="sep">→</span>
+    <a href="#" onclick="showPage('shop')">Boutique</a>
+    <span class="sep">→</span>
+    <span id="bc-name">Produit</span>
+  </div>
+  <div class="pd-grid" id="pdDetail"></div>
+  <div class="related-section">
+    <div class="s-head"><p class="s-label">Vous aimerez aussi</p><h2 class="s-title">Œuvres similaires</h2></div>
+    <div class="prod-grid" id="relGrid"></div>
+  </div>
+  <footer>
+    <div class="foot-grid">
+      <div class="foot-brand"><a href="#" class="logo-f" onclick="showPage('home')">HOSARAH</a><p>Art spirituel & minimaliste.</p></div>
+      <div class="foot-col"><h4>Navigation</h4><ul><li><a href="#" onclick="showPage('home')">Accueil</a></li><li><a href="#" onclick="showPage('shop')">Boutique</a></li><li><a href="#" onclick="showPage('contact')">Contact</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">© 2025 HOSARAH</div>
+  </footer>
+</div>
+
+<!-- ═══ PAGE CONTACT ═══ -->
+<div class="page" id="page-contact">
+  <div class="shop-hero">
+    <p class="s-label">Nous écrire</p>
+    <h1>Contact</h1>
+    <p>Une question, une commande spéciale ou simplement bonjour — nous sommes là.</p>
+  </div>
+  <div class="contact-wrap">
+    <div class="contact-info">
+      <h2>Parlons-nous</h2>
+      <p>Nous répondons à chaque message avec soin, sous 24 à 48h ouvrées.</p>
+      <div class="c-det"><div class="c-icon">✉</div><div><h4>Email</h4><p>contact@hosarah.com</p></div></div>
+      <div class="c-det"><div class="c-icon">◎</div><div><h4>Instagram</h4><p>@hosarah.art</p></div></div>
+      <div class="c-det"><div class="c-icon">⏱</div><div><h4>Délai de réponse</h4><p>24 – 48 heures ouvrées</p></div></div>
+      <div class="c-orb">✦</div>
+    </div>
+    <div>
+      <form class="c-form" onsubmit="handleContact(event)">
+        <div class="f-grp"><label>Votre prénom</label><input type="text" placeholder="Ex: Amira" required/></div>
+        <div class="f-grp"><label>Votre email</label><input type="email" placeholder="amira@email.com" required/></div>
+        <div class="f-grp"><label>Sujet</label><select><option value="">Sélectionner un sujet</option><option>Suivi de commande</option><option>Question produit</option><option>Personnalisation</option><option>Autre</option></select></div>
+        <div class="f-grp"><label>Votre message</label><textarea rows="5" placeholder="Bonjour, je souhaitais..." required></textarea></div>
+        <button type="submit" class="btn btn-dark btn-w" id="ctcBtn">Envoyer le message</button>
+        <p class="f-note" id="ctcNote"></p>
+      </form>
+    </div>
+  </div>
+  <div class="faq-wrap">
+    <div class="s-head" style="margin-bottom:3rem"><p class="s-label">Questions fréquentes</p><h2 class="s-title">FAQ</h2></div>
+    <div class="faq-list">
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Quels formats pour les posters imprimés ?<span class="faq-arr">↓</span></button><div class="faq-a"><p>Nous proposons A4 (21×29,7 cm), A3 (29,7×42 cm) et 50×70 cm. Chaque format est imprimé sur papier premium 250g mat.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Comment recevoir ma version digitale ?<span class="faq-arr">↓</span></button><div class="faq-a"><p>Après validation, un lien de téléchargement vous est envoyé par email dans les minutes qui suivent. Vos fichiers sont en haute résolution (300 DPI), formats JPG et PDF inclus.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Puis-je personnaliser une œuvre ?<span class="faq-arr">↓</span></button><div class="faq-a"><p>Oui ! Contactez-nous via le formulaire avec vos idées. Nous proposons des créations sur mesure pour des projets personnels ou professionnels.</p></div></div>
+      <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)">Quels sont les délais de livraison ?<span class="faq-arr">↓</span></button><div class="faq-a"><p>Les posters imprimés sont livrés sous 5 à 10 jours ouvrés en France. Les versions digitales sont disponibles instantanément après paiement.</p></div></div>
+    </div>
+  </div>
+  <footer>
+    <div class="foot-grid">
+      <div class="foot-brand"><a href="#" class="logo-f" onclick="showPage('home')">HOSARAH</a><p>Art spirituel & minimaliste pour des espaces qui respirent.</p></div>
+      <div class="foot-col"><h4>Navigation</h4><ul><li><a href="#" onclick="showPage('home')">Accueil</a></li><li><a href="#" onclick="showPage('shop')">Boutique</a></li></ul></div>
+    </div>
+    <div class="foot-bottom">© 2025 HOSARAH — Tous droits réservés.</div>
+  </footer>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const P=[
+  {id:1,name:"Sérénité Dorée",cat:"posters",catL:"Poster Imprimé",price:29.90,orig:null,emo:"🌸",desc:"Une composition minimaliste inspirée de la lumière du matin. Imprimée sur papier premium mat 250g, cette affiche apporte calme et douceur à votre espace intérieur.",vars:{Format:["A4","A3","50×70"],Finition:["Mat","Brillant"]},feats:["Papier premium 250g","Impression haute définition","Livraison sous 5–7 jours","Emballage soigné"],badge:null,feat:true},
+  {id:2,name:"Lumière Intérieure",cat:"posters",catL:"Poster Imprimé",price:34.90,orig:44.90,emo:"✨",desc:"Affiche spirituelle illustrant le voyage vers la lumière intérieure. Minimaliste et puissante, elle accompagne votre chemin de conscience éveillée.",vars:{Format:["A4","A3","50×70"],Finition:["Mat","Brillant"]},feats:["Papier premium 250g","Impression haute définition","Livraison sous 5–7 jours","Encadrement possible"],badge:"Promo",feat:true},
+  {id:3,name:"Souffle du Vent",cat:"digital",catL:"Version Digitale",price:9.90,orig:null,emo:"🌿",desc:"Fichier numérique haute résolution (300 DPI) à télécharger instantanément. Format JPG + PDF inclus, prêt à l'impression dans n'importe quelle taille.",vars:{Format:["A4","A3","Carré"]},feats:["Téléchargement instantané","300 DPI haute résolution","Format JPG + PDF","Usage personnel illimité"],badge:"Digital",feat:true},
+  {id:4,name:"Silence Sacré",cat:"wallpapers",catL:"Fond d'écran",price:4.90,orig:null,emo:"🌙",desc:"Fond d'écran minimaliste pour mobile et desktop. Disponible en plusieurs résolutions adaptées à tous vos appareils numériques.",vars:{Taille:["Mobile","Desktop","Tablette"]},feats:["Multi-résolutions incluses","Mobile + Desktop + Tablette","Téléchargement instantané","Optimisé OLED"],badge:null,feat:false},
+  {id:5,name:"Pack Trio Éveil",cat:"packs",catL:"Pack Trio",price:69.90,orig:89.90,emo:"✦",desc:"Sélection de 3 posters imprimés soigneusement accordés. Un ensemble cohérent pour créer un mur de galerie spirituel et harmonieux chez vous.",vars:{Format:["A4","A3"],Finition:["Mat","Brillant"]},feats:["3 posters imprimés premium","Palette harmonisée","Économisez 23%","Livraison soignée"],badge:"Best-seller",feat:true},
+  {id:6,name:"Racines Profondes",cat:"posters",catL:"Poster Imprimé",price:29.90,orig:null,emo:"🌾",desc:"Affiche minimaliste célébrant l'ancrage et la profondeur. Des lignes épurées qui rappellent la force tranquille de la nature et de la terre.",vars:{Format:["A4","A3","50×70"],Finition:["Mat","Brillant"]},feats:["Papier premium 250g","Impression haute définition","Livraison sous 5–7 jours"],badge:null,feat:false},
+  {id:7,name:"Ondulations",cat:"digital",catL:"Version Digitale",price:9.90,orig:null,emo:"〰️",desc:"Art digital minimaliste représentant les ondes de l'existence. Fichier haute résolution pour impression personnelle ou usage digital.",vars:{Format:["A4","A3","Carré"]},feats:["Téléchargement instantané","300 DPI haute résolution","Format JPG + PDF"],badge:null,feat:false},
+  {id:8,name:"Aurore Douce",cat:"wallpapers",catL:"Fond d'écran",price:4.90,orig:null,emo:"🌅",desc:"Fond d'écran aux teintes chaudes de l'aurore. Une présence douce et inspirante sur tous vos écrans, du matin au soir.",vars:{Taille:["Mobile","Desktop","Tablette"]},feats:["Multi-résolutions incluses","Mobile + Desktop","Téléchargement instantané"],badge:"Nouveau",feat:false},
+  {id:9,name:"Pack Trio Harmonie",cat:"packs",catL:"Pack Trio",price:59.90,orig:74.90,emo:"◎",desc:"Trio de versions digitales accordées pour créer une atmosphère cohérente. 3 fichiers haute résolution, téléchargement immédiat après paiement.",vars:{Format:["A4","A3"]},feats:["3 fichiers digitaux HD","Palette harmonisée","Téléchargement instantané","Économisez 20%"],badge:"Promo",feat:true},
+  {id:10,name:"Contemplation",cat:"posters",catL:"Poster Imprimé",price:34.90,orig:null,emo:"🪷",desc:"Affiche poétique invitant à la contemplation. Une composition abstraite et spirituelle pour les esprits en quête de sens et de beauté.",vars:{Format:["A4","A3","50×70"],Finition:["Mat","Brillant"]},feats:["Papier premium 250g","Impression haute définition","Livraison sous 5–7 jours"],badge:null,feat:false},
+  {id:11,name:"Murmures",cat:"wallpapers",catL:"Fond d'écran",price:4.90,orig:null,emo:"🌬️",desc:"Fonds d'écran aux teintes neutres et apaisantes pour accompagner vos journées, quel que soit l'appareil utilisé.",vars:{Taille:["Mobile","Desktop","Tablette"]},feats:["Multi-résolutions incluses","Mobile + Desktop","Téléchargement instantané"],badge:null,feat:false},
+  {id:12,name:"Pack Trio Cosmos",cat:"packs",catL:"Pack Trio",price:74.90,orig:99.90,emo:"🌌",desc:"Notre collection la plus mystique. Trois affiches grand format imprimées sur papier premium, évoquant le cosmos et l'infini.",vars:{Format:["A3","50×70"],Finition:["Mat"]},feats:["3 posters grand format","Papier premium 250g","Économisez 25%","Livraison offerte"],badge:"Exclusif",feat:false}
+];
+
+// ── CART ──────────────────────────────────────────────────────
+let cart=JSON.parse(localStorage.getItem('hsr_cart')||'[]');
+let selV={};
+
+const save=()=>{localStorage.setItem('hsr_cart',JSON.stringify(cart));badge();renderCart()};
+const cartTotal=()=>cart.reduce((s,i)=>{const p=P.find(x=>x.id===i.id);return s+(p?p.price*i.qty:0);},0);
+const cartN=()=>cart.reduce((s,i)=>s+i.qty,0);
+
+function addC(id,v,qty=1){
+  const p=P.find(x=>x.id===id);if(!p)return;
+  const vk=JSON.stringify(v);
+  const ex=cart.find(i=>i.id===id&&JSON.stringify(i.variants)===vk);
+  if(ex)ex.qty+=qty;else cart.push({id,variants:v,qty});
+  save();toast(`"${p.name}" ajouté au panier ✓`);openCart();
+}
+function rmC(id,vk){cart=cart.filter(i=>!(i.id===id&&JSON.stringify(i.variants)===vk));save();}
+function chQ(id,vk,d){const it=cart.find(i=>i.id===id&&JSON.stringify(i.variants)===vk);if(it)it.qty=Math.max(1,it.qty+d);save();}
+
+function badge(){
+  const b=document.getElementById('badge'),n=cartN();
+  b.textContent=n;b.classList.toggle('hide',n===0);
+}
+
+function renderCart(){
+  const body=document.getElementById('cartBody'),foot=document.getElementById('cartFoot');
+  if(!body)return;
+  if(!cart.length){
+    body.innerHTML=`<div class="cart-empty-state"><div class="emo">✦</div><p>Votre panier est vide</p><button class="btn btn-line" style="margin-top:1rem" onclick="closeCart();showPage('shop')">Explorer la boutique</button></div>`;
+    foot.innerHTML='';return;
+  }
+  body.innerHTML=cart.map(item=>{
+    const p=P.find(x=>x.id===item.id);if(!p)return'';
+    const vk=JSON.stringify(item.variants);
+    const vkS=vk.replace(/"/g,"'");
+    return`<div class="cart-item">
+      <div class="cart-thumb">${p.emo}</div>
+      <div>
+        <h4>${p.name}</h4>
+        <p class="cart-variant">${Object.values(item.variants).join(' · ')||p.catL}</p>
+        <div class="qty-row">
+          <button class="qty-btn" onclick='chQ(${p.id},${vkS},-1)'>−</button>
+          <span>${item.qty}</span>
+          <button class="qty-btn" onclick='chQ(${p.id},${vkS},+1)'>+</button>
+        </div>
+        <span class="rm-btn" onclick='rmC(${p.id},${vkS})'>Supprimer</span>
+      </div>
+      <div class="cart-price">${(p.price*item.qty).toFixed(2)} €</div>
+    </div>`;
+  }).join('');
+  foot.innerHTML=`<div class="cart-foot">
+    <div class="cart-total-row"><span>Total</span><span>${cartTotal().toFixed(2)} €</span></div>
+    <button class="btn btn-dark btn-w" onclick="openCk()">Commander</button>
+    <p style="text-align:center;font-size:.72rem;color:var(--muted);margin-top:.75rem">Frais de port calculés à l'étape suivante</p>
+  </div>`;
+}
+
+// ── PRODUCT CARDS ─────────────────────────────────────────────
+function makeCard(p){
+  const bdg=p.badge?`<div class="prod-badge${p.badge==='Promo'?' sale-badge':''}">${p.badge}</div>`:'';
+  const price=p.orig?`<span class="was">${p.orig.toFixed(2)} €</span><span class="now">${p.price.toFixed(2)} €</span>`:`${p.price.toFixed(2)} €`;
+  return`<div class="prod-card" onclick="showProd(${p.id})">
+    <div class="prod-img"><div class="prod-emo">${p.emo}</div>${bdg}<div class="prod-overlay"><button class="ov-btn">Voir le produit</button></div></div>
+    <p class="prod-cat">${p.catL}</p><h3 class="prod-name">${p.name}</h3><p class="prod-price">${price}</p>
+  </div>`;
+}
+
+function renderFeat(){const el=document.getElementById('featGrid');if(!el)return;el.innerHTML=P.filter(p=>p.feat).slice(0,4).map(makeCard).join('');}
+
+function filterProd(cat,btn){
+  document.querySelectorAll('.f-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  else{const b=document.querySelector(`[data-cat="${cat}"]`);if(b){document.querySelectorAll('.f-btn').forEach(x=>x.classList.remove('on'));b.classList.add('on');}}
+  const list=cat==='all'?P:P.filter(p=>p.cat===cat);
+  const el=document.getElementById('shopGrid');if(!el)return;
+  const cnt=document.getElementById('prodCount');
+  if(cnt)cnt.textContent=`${list.length} produit${list.length>1?'s':''}`;
+  el.style.opacity='0';el.style.transform='translateY(10px)';el.style.transition='all .28s';
+  setTimeout(()=>{el.innerHTML=list.map(makeCard).join('');el.style.opacity='1';el.style.transform='translateY(0)';},260);
+}
+
+// ── PRODUCT DETAIL ────────────────────────────────────────────
+function showProd(id){
+  selV={};
+  const p=P.find(x=>x.id===id);if(!p)return;
+  if(p.vars)Object.entries(p.vars).forEach(([k,v])=>selV[k]=v[0]);
+  document.getElementById('bc-name').textContent=p.name;
+
+  const varSecs=p.vars?Object.entries(p.vars).map(([k,opts])=>`
+    <div class="var-sec"><p class="var-label">${k}</p>
+    <div class="var-opts" data-key="${k}">${opts.map((o,i)=>`<button class="var-opt${i===0?' on':''}" onclick="doSelV('${k}','${o}',this)">${o}</button>`).join('')}</div></div>`).join(''):'';
+  const feats=p.feats?p.feats.map(f=>`<div class="feat-item"><span class="feat-icon">✓</span><span>${f}</span></div>`).join(''):'';
+  const priceH=p.orig?`<span class="was">${p.orig.toFixed(2)} €</span>${p.price.toFixed(2)} €`:`${p.price.toFixed(2)} €`;
+
+  document.getElementById('pdDetail').innerHTML=`
+    <div>
+      <div class="pd-main-img" id="pdImg">${p.emo}</div>
+      <div class="pd-thumbs">
+        <div class="pd-th on" onclick="selTh(this,'${p.emo}')">${p.emo}</div>
+        <div class="pd-th" onclick="selTh(this,'🖼')">🖼</div>
+        <div class="pd-th" onclick="selTh(this,'✦')">✦</div>
+      </div>
+    </div>
+    <div>
+      <p class="pd-cat">${p.catL}</p>
+      <h1 class="pd-name">${p.name}</h1>
+      <div class="pd-price">${priceH}</div>
+      <p class="pd-desc">${p.desc}</p>
+      ${varSecs}
+      <div class="feat-list">${feats}</div>
+      <button class="atc-btn" onclick="addC(${id},{...selV})">Ajouter au panier</button>
+      <button class="btn btn-line btn-w" onclick="showPage('shop')">← Continuer mes achats</button>
+    </div>`;
+
+  document.getElementById('relGrid').innerHTML=P.filter(x=>x.id!==id&&x.cat===p.cat).slice(0,4).map(makeCard).join('');
+  showPage('product');
+}
+
+function doSelV(k,v,btn){
+  selV[k]=v;
+  btn.closest('.var-opts').querySelectorAll('.var-opt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+function selTh(el,emo){
+  document.querySelectorAll('.pd-th').forEach(t=>t.classList.remove('on'));el.classList.add('on');
+  const mi=document.getElementById('pdImg');if(!mi)return;
+  mi.style.opacity='0';mi.style.transform='scale(.96)';mi.style.transition='all .22s';
+  setTimeout(()=>{mi.textContent=emo;mi.style.opacity='1';mi.style.transform='scale(1)';},210);
+}
+
+// ── ROUTING ───────────────────────────────────────────────────
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(name==='shop')setTimeout(()=>filterProd('all',document.querySelector('[data-cat="all"]')),50);
+  if(name==='home'){renderFeat();initReveal();}
+}
+
+// ── UI ────────────────────────────────────────────────────────
+function openSideNav(){document.getElementById('sideNav').classList.add('on');document.getElementById('overlay').classList.add('on');document.body.style.overflow='hidden';}
+function closeSideNav(){document.getElementById('sideNav').classList.remove('on');if(!document.getElementById('cartPanel').classList.contains('on')){document.getElementById('overlay').classList.remove('on');document.body.style.overflow='';}}
+function openCart(){renderCart();document.getElementById('cartPanel').classList.add('on');document.getElementById('overlay').classList.add('on');document.body.style.overflow='hidden';}
+function closeCart(){document.getElementById('cartPanel').classList.remove('on');if(!document.getElementById('sideNav').classList.contains('on')){document.getElementById('overlay').classList.remove('on');document.body.style.overflow='';}}
+function openAccount(){document.getElementById('accountModal').classList.add('on');document.body.style.overflow='hidden';}
+function closeAccount(){document.getElementById('accountModal').classList.remove('on');document.body.style.overflow='';}
+function switchTab(t){
+  document.getElementById('tabLogin').classList.toggle('active',t==='login');
+  document.getElementById('tabReg').classList.toggle('active',t==='reg');
+  document.getElementById('formLogin').style.display=t==='login'?'block':'none';
+  document.getElementById('formReg').style.display=t==='reg'?'block':'none';
+}
+
+// ── CHECKOUT ──────────────────────────────────────────────────
+function openCk(){
+  if(!cart.length){toast('Votre panier est vide');return;}
+  closeCart();
+  document.getElementById('ckSummary').innerHTML=
+    cart.map(i=>{const p=P.find(x=>x.id===i.id);if(!p)return'';return`<div class="ck-row"><span>${p.name} × ${i.qty}</span><span>${(p.price*i.qty).toFixed(2)} €</span></div>`;}).join('')+
+    `<div class="ck-total"><span>Total</span><span>${cartTotal().toFixed(2)} €</span></div>`;
+  document.getElementById('ck1').classList.add('on');document.getElementById('ck2').classList.remove('on');
+  const btn=document.getElementById('ckPayBtn');if(btn){btn.textContent=`Payer ${cartTotal().toFixed(2)} €`;btn.disabled=false;}
+  document.getElementById('ckModal').classList.add('on');document.body.style.overflow='hidden';
+}
+function closeCk(){document.getElementById('ckModal').classList.remove('on');document.body.style.overflow='';}
+function processCk(e){
+  e.preventDefault();
+  const btn=document.getElementById('ckPayBtn');btn.textContent='Traitement en cours…';btn.disabled=true;
+  setTimeout(()=>{
+    const num='HSR-'+Math.random().toString(36).substr(2,8).toUpperCase();
+    // sendVendorNotif({num, total:cartTotal(), items:[...cart]}); // EmailJS/webhook ici
+    cart=[];save();
+    document.getElementById('orderNum').textContent=`Commande N° ${num}`;
+    document.getElementById('ck1').classList.remove('on');
+    document.getElementById('ck2').classList.add('on');
+  },1800);
+}
+function fmtCard(el){let v=el.value.replace(/\D/g,'').substr(0,16);el.value=v.match(/.{1,4}/g)?.join(' ')||v;}
+
+// ── FAQ ───────────────────────────────────────────────────────
+function toggleFaq(btn){
+  const a=btn.nextElementSibling,isOpen=a.classList.contains('open');
+  document.querySelectorAll('.faq-a').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.faq-q').forEach(x=>x.classList.remove('open'));
+  if(!isOpen){a.classList.add('open');btn.classList.add('open');}
+}
+
+// ── FORMS ─────────────────────────────────────────────────────
+function handleNL(e){
+  e.preventDefault();
+  const note=document.getElementById('nlNote'),inp=e.target.querySelector('input');
+  const subs=JSON.parse(localStorage.getItem('hsr_nl')||'[]');
+  if(!subs.includes(inp.value)){subs.push(inp.value);localStorage.setItem('hsr_nl',JSON.stringify(subs));}
+  note.textContent='✓ Merci ! Vous êtes inscrit(e) à notre newsletter.';note.style.color='var(--sage)';inp.value='';
+}
+function handleContact(e){
+  e.preventDefault();
+  const btn=document.getElementById('ctcBtn'),note=document.getElementById('ctcNote');
+  btn.textContent='Envoi en cours…';btn.disabled=true;
+  setTimeout(()=>{note.textContent='✓ Message envoyé ! Nous répondrons sous 24–48h.';note.style.color='var(--sage-dk)';btn.textContent='Envoyer le message';btn.disabled=false;e.target.reset();},1200);
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+let tTO;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(tTO);tTO=setTimeout(()=>t.classList.remove('show'),3200);}
+
+// ── SCROLL HEADER ─────────────────────────────────────────────
+window.addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>20));
+
+// ── REVEAL ────────────────────────────────────────────────────
+function initReveal(){
+  const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target);}}),{threshold:.1});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',()=>{
+  badge();renderFeat();
+  filterProd('all',document.querySelector('[data-cat="all"]'));
+  initReveal();
+});
+</script>
+</body>
+</html>
